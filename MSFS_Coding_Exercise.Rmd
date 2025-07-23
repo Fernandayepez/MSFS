@@ -1,0 +1,332 @@
+---
+title: "\\textcolor{cobalt}{\\textbf{MSFS Coding Exercise}}"
+author: "\\textcolor{cobalt}{\\textbf{Fernanda Yepez-Lopez}}"
+output: 
+  pdf_document:
+    includes:
+      in_header: preamble.tex
+---
+
+# Question
+Among S&P 500 constituents as of October 1, 2024, do stocks that outperformed in Q4 2024 tend to continue outperforming in Q1 2025, or do they revert?
+\vspace{1mm}
+
+# Obtain the List of S&P 500 Constituents as of October 1st, 2024
+
+I used the wayback machine website to look at the S&P 500 ETF Components https://www.slickcharts.com/sp500 on October 1st 2024. Then I copied the chart onto an Excel sheet 
+
+\vspace{3mm}
+
+```{r}
+library(readxl)
+library(quantmod)
+
+sp500_Oct_data <- read_excel("S&P 500 Index Components.xlsx")
+head(sp500_Oct_data)
+
+tickers <- sp500_Oct_data$Symbol
+head(tickers)
+tickers <- gsub("\\.", "-", tickers)
+
+```
+
+# Adjusted Closing Prices 
+
+### Helpful Dates Q4 2024
+
+```{r}
+q4_start <- as.Date("2024-10-01")
+q4_end <- as.Date("2024-12-31")
+q4_extended <-as.Date("2025-01-01")
+```
+
+### Helpful Dates Q1 2025
+
+```{r}
+q1_start <- as.Date("2025-01-01")
+q1_end <- as.Date("2025-03-31")
+q1_extended <-as.Date("2025-04-01")
+```
+
+### Write Function to Get Adjusted Closing Prices
+
+We use adjusted price in order to  account for corporate actions such as stock splits, dividends, and rights offerings in the closing price. 
+
+```{r}
+
+find_adjusted <- function(tickers, start_date, end_date) {
+  
+   if (!is.vector(tickers) == 1) {
+    tickers <- as.character(tickers)
+  }
+
+  price_list <- list()
+  
+  for (ticker in tickers) {
+    
+    tryCatch(
+      {
+        complete_ticker_data<- getSymbols(
+          ticker, 
+          src = "yahoo", 
+          from = start_date, 
+          to = end_date, 
+          auto.assign = FALSE 
+        )
+        adj <-as.numeric(Ad(complete_ticker_data))
+        price_list[[ticker]]=adj
+      }, 
+      error = function(e) {
+        message(ticker)
+      }
+    )
+  } 
+  return(price_list)
+}
+
+```
+
+### Adjusted Prices for all Ticker Q4
+```{r}
+q4_adjusted_prices <- find_adjusted(tickers, q4_start, q4_extended)
+print(q4_adjusted_prices$AAPL)
+```
+
+### Adjusted Prices for all Ticker Q1
+
+```{r}
+
+q1_adjusted_prices <- find_adjusted(tickers,q1_start,q1_extended)
+
+print(q1_adjusted_prices$AAPL)
+```
+### Adjusted Prices for Index Q4
+
+```{r}
+index <- "^GSPC"
+
+q4_index_adj <- find_adjusted(index,q4_start,q4_extended)
+head(q4_index_adj)
+```
+### Adjusted Prices for Index Q1
+
+```{r}
+q1_index_adj <- find_adjusted(index,q1_start,q1_extended)
+head(q1_index_adj)
+
+```
+
+# Total Returns
+
+### Function to Obtain Total Return of Each Ticker
+```{r}
+find_return <- function(adjusted_prices) {
+  
+  return_list <- list()
+  
+  for (ticker in names(adjusted_prices)) {
+    tryCatch({
+      start_adj <- as.numeric(adjusted_prices[[ticker]][1])
+      end_adj <- as.numeric(tail(adjusted_prices[[ticker]], 1))
+      return_val <- (end_adj - start_adj) / start_adj
+      return_list[[ticker]] <- return_val
+    }, error = function(e) {
+      message(ticker)
+    })
+  }
+  
+  return(return_list)
+}
+```
+
+### Total Return Q4
+```{r}
+q4_total_returns <-find_return(q4_adjusted_prices)
+head(q4_total_returns)
+```
+
+### Total Return Q4
+```{r}
+q1_total_returns <- find_return(q1_adjusted_prices)
+head(q1_total_returns)
+```
+
+### Index Return Q4
+```{r}
+q4_index_return <- find_return(q4_index_adj)
+q4_index_return <- unlist(q4_index_return)
+print(q4_index_return)
+```
+
+### Index Return Q1
+```{r}
+q1_index_return <- find_return(q1_index_adj)
+q1_index_return <- unlist(q1_index_return)
+print(q1_index_return)
+```
+
+# Outperforming and Underperforming Stock
+
+### Sorting Q4 Stocks
+```{r}
+
+q4_outperforming_stocks <- c()
+q4_underperforming_stocks <- c()
+
+for (ticker in tickers) {
+  if (q4_total_returns[[ticker]] > q4_index_return) {
+    q4_outperforming_stocks <- c(q4_outperforming_stocks, ticker)
+  }
+  if (q4_total_returns[[ticker]] < q4_index_return) {
+    q4_underperforming_stocks <- c(q4_underperforming_stocks, ticker)
+  }
+}
+
+head(q4_outperforming_stocks)
+head(q4_underperforming_stocks)
+
+```
+
+### Sorting Q1 Stocks
+```{r}
+
+q1_outperforming_stocks <- c()
+q1_underperforming_stocks <- c()
+
+for (ticker in tickers) {
+  if (q1_total_returns[[ticker]] > q1_index_return) {
+    q1_outperforming_stocks <- c(q1_outperforming_stocks, ticker)
+  }
+  if (q1_total_returns[[ticker]] < q1_index_return) {
+    q1_underperforming_stocks <- c(q1_underperforming_stocks, ticker)
+  }
+}
+
+head(q1_outperforming_stocks)
+head(q1_underperforming_stocks)
+```
+
+### Verifying that all stocks are sorted Q4
+```{r}
+q4_total<-length(q4_outperforming_stocks)+length(q4_underperforming_stocks)
+print(q4_total)
+
+```
+
+### Verifying that all stocks are sorted Q1
+```{r}
+q1_total<-length(q1_outperforming_stocks)+length(q1_underperforming_stocks)
+print(q1_total)
+
+```
+
+# Contigency Table
+
+### Sorting Q4
+```{r}
+Q4 <- list()
+
+for(ticker in tickers){
+  if(ticker %in% q4_outperforming_stocks){
+    Q4[ticker] <- 1
+  } else{
+    Q4[ticker] <- 0
+  }
+}
+
+#print(Q4)
+```
+
+### Sorting Q1
+```{r}
+Q1 <- list()
+
+for(ticker in tickers){
+  if(ticker %in% q1_outperforming_stocks){
+    Q1[ticker] <- 1
+  } else{
+    Q1[ticker] <- 0
+  }
+}
+
+#print(Q1)
+
+```
+
+### Dataframe
+```{r}
+
+df <- data.frame(
+  ticker = names(Q4),
+  Q4 = as.numeric(Q4),
+  Q1 = as.numeric(Q1[names(Q4)])  
+)
+
+head(df)
+```
+
+### Contigency Table
+```{r}
+contingency_table <- table(Q4 = df$Q4, Q1 = df$Q1)
+
+print(contingency_table)
+```
+
+### Probability Table
+```{r}
+prob_table <- prop.table(contingency_table, margin = 1)
+rownames(prob_table) <- c("Underperform", "Outperform")
+colnames(prob_table) <- c("Underperform", "Outperform")
+
+
+prob_table <- round(prob_table, 3)
+print(prob_table)
+```
+# Binomial Regression
+
+
+### Regression
+
+```{r}
+
+performance <- glm(Q1~ Q4, data=df, family = binomial)
+
+```
+
+### Interpretations
+```{r}
+coeffs <- coef(performance)
+intercept <- coeffs[1]
+beta_Q4 <- coeffs[2]
+
+p_q1_given_q4_under <- 1 / (1 + exp(-(intercept + beta_Q4 * 0)))
+cat("P(Q1 Outperformer| Q4 Outperformer)=", p_q1_given_q4_under, "\n")
+
+p_q1_given_q4_out <- 1 / (1 + exp(-(intercept + beta_Q4 * 1)))
+cat("P(Q1 Outperformer| Q4 Underperformer)=", p_q1_given_q4_out)
+
+```
+
+# Visualizations 
+
+```{r}
+library(ggplot2)
+prob_df <- as.data.frame(as.table(prob_table))
+colnames(prob_df) <- c("Q4", "Q1", "Probability")
+
+
+ggplot(prob_df, aes(x = Q4, y = Probability, fill = Q1)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.7), width = 0.6) +
+  geom_text(aes(label = round(Probability, 3)),
+            position = position_dodge(width = 0.7),
+            vjust = -0.5, size = 4) +
+  labs(
+    title = "Probability of Q1 Performance Given Q4 Behavior",
+    x = "Q4 Performance",
+    y = "Probability"
+  ) +
+  scale_fill_manual(values = c("indianred", "steelblue")) +
+  theme_minimal(base_size = 14)
+
+
+```
