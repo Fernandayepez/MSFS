@@ -13,6 +13,4 @@ Stocks that outperformed in Q4 2024 are roughly equally likely to outperform or 
 This suggests a mean-reverting pattern among Q4 underperformers but no strong momentum effect among Q4 outperformers.
 
 Next Steps:
-Extend the analysis to Q2 2025 to assess whether the pattern persists.
-Dive deeper into the Q4 2024 outperformers to identify potential heterogeneity.
-For instance, distinguishing between consistent performers and those driven by short-term volatility, which may be obscuring the broader signal.
+Dive deeper into the Q4 2024 outperformers to identify potential heterogeneity using quantiles.
