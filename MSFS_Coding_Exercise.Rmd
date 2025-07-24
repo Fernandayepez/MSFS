@@ -97,7 +97,6 @@ print(q4_adjusted_prices$AAPL)
 ```{r}
 
 q1_adjusted_prices <- find_adjusted(tickers,q1_start,q1_extended)
-
 print(q1_adjusted_prices$AAPL)
 ```
 ### Adjusted Prices for Index Q4
@@ -106,14 +105,13 @@ print(q1_adjusted_prices$AAPL)
 index <- "^GSPC"
 
 q4_index_adj <- find_adjusted(index,q4_start,q4_extended)
-head(q4_index_adj)
+print(q4_index_adj)
 ```
 ### Adjusted Prices for Index Q1
 
 ```{r}
 q1_index_adj <- find_adjusted(index,q1_start,q1_extended)
-head(q1_index_adj)
-
+print(q1_index_adj)
 ```
 
 # Total Returns
@@ -221,6 +219,60 @@ print(q1_total)
 
 ```
 
+### Plot Q4 Returns 
+```{r}
+barplot(
+  as.numeric(q4_total_returns),
+  names.arg = names(q4_total_returns),
+  las = 2,
+  cex.names = 0.5,
+  main = "Q4 2024 Total Returns",
+  ylab = "Return",
+  col = "skyblue"
+)
+
+# add index and also order them 
+barplot(
+  sort(unlist(q4_total_returns)),
+  main = "Q4 2024 Total Returns",
+  xlab = "Ticker",
+  ylab = "Return",
+  col = "black",
+  las = 2,
+  border = NA
+)
+abline(h = q4_index_return, col = "red", lwd = 2)
+
+
+```
+
+### Plot Q1 Returns 
+```{r}
+barplot(
+  as.numeric(q1_total_returns),
+  names.arg = names(q1_total_returns),
+  las = 2,
+  cex.names = 0.5,
+  main = "Q1 2024 Total Returns",
+  ylab = "Return",
+  col = "skyblue"
+)
+
+# add index and also order them 
+barplot(
+  sort(unlist(q1_total_returns)),
+  main = "Q1 2024 Total Returns",
+  xlab = "Ticker",
+  ylab = "Return",
+  col = "black",
+  las = 2,
+  border = NA
+)
+abline(h = q1_index_return, col = "red", lwd = 2)
+
+
+```
+
 # Contigency Table
 
 ### Sorting Q4
@@ -303,9 +355,9 @@ print(prob_table)
 performance <- glm(Q1~ Q4, data=df, family = binomial)
 summary(performance)
 ```
-Since intercept is statistically significant, there is strong evidence that Q4 underperformance has a significantly positive chance of Q1 outperformance. Similarly, since beta_Q4 statistically significant there is here is strong evidence that Q4 outperformance reduces the likelihood of Q1 outperformance. 
+Since intercept is statistically significant, there is strong evidence that Q4 underperformance has a significantly positive chance of Q1 outperformance. Similarly, since beta_Q4 statistically significant there is strong evidence that Q4 outperformance reduces the likelihood of Q1 outperformance. 
 
-### Interpretations
+### Another Way to Get Conditional Probabilities
 ```{r}
 
 coeffs <- coef(performance)
@@ -345,7 +397,7 @@ ggplot(prob_df, aes(x = Q4, y = Probability, fill = Q1)) +
 
 # Conclusion
 
-Stocks that underperformed in Q4 2024 are much more likely to outperform in Q1 2025. Stocks that outperformed in Q4 2024 are roughly equally likely to outperform or underperform in Q1 2025. This suggests a mean-reverting pattern among Q4 underperformers but no strong momentum effect among Q4 outperformers
+Stocks that underperformed in Q4 2024 are much more likely to outperform in Q1 2025. Stocks that outperformed in Q4 2024 are more likely to underperform in Q1 2025.
 
 # Further Steps- Percent Impact
 
