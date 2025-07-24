@@ -9,8 +9,7 @@ probabilities.
 
 Key Findings:
 Stocks that underperformed in Q4 2024 are much more likely to outperform in Q1 2025.
-Stocks that outperformed in Q4 2024 are roughly equally likely to outperform or underperform in Q1 2025.
-This suggests a mean-reverting pattern among Q4 underperformers but no strong momentum effect among Q4 outperformers.
+Stocks that outperformed in Q4 2024 are much more likely to underperform in Q1 2025.
 
 Next Steps:
 Dive deeper into the Q4 2024 outperformers to identify potential heterogeneity using quantiles.
